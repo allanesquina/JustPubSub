@@ -1,53 +1,57 @@
 var PubSub = (function( window, document ) {
 
 	'use strict';
+
+	// Used to store registered topics
+	var topics = [];
+
 	/**
 	 * Check name and if the function exists
 	 */
 	function validate( name, trigger ) {
-		var fn = on[ name ];
 		if( typeof name !== 'string'  ) {
 			throw( 'Function name need to be a string' );
-		} 
-		if( trigger && !( fn && fn.apply ) ) {
-			throw( 'Function ' + name + ' is not registered' );
 		}
-		return fn;
+		return true;
 	}
 
 	/**
-	 * Registering function on object on 
+	 * Subscribing topic on object topics
 	 */
-	function on( name, fn ) {
-		if( !validate( name ) ) {
-			on[ name ] = fn;
-		} else {
-			on[ name ] = fn;
-			console.warn( 'Function ' + name.toUpperCase() + ' was overwritten');
+	function sub( name, fn ) {
+		if( validate( name ) && ( fn && fn.call ) ) {
+			( topics[ name ] = topics[ name ] || [] ).push( fn );
 		}
 	}
 
 	/**
-	 * Triggering the registered function
+	 * Publishing the registered topics
 	 */
-	function trigger( name ) {
-		var fn = validate( name, true );
-		fn.apply( this, Array.prototype.slice.call( arguments, 1 ) );
-	}
-	
-	/**
-	 * Removing the registered function 
-	 */
-	function remove( name ) {
+	function pub( name ) {
+		var	tpc = topics[ name ] || [],
+			len = tpc.length,
+			i=0;
+
 		if( validate( name ) ) {
-			delete on[ name ];
+			for( ; i < len ; i+=1 ) {
+				tpc[ i ].apply( this, Array.prototype.slice.call( arguments, 1 ) );
+			}
+		}
+	}
+
+	/**
+	 * Removing the registered function
+	 */
+	function unsub( name ) {
+		if( validate( name ) ) {
+			delete topics[ name ];
 		}
 	}
 
 	return {
-		on: on, 
-		trigger: trigger,
-		remove: remove
+		sub: sub,
+		pub: pub,
+		unsub: unsub
 
 	}
 }( window, document ));
